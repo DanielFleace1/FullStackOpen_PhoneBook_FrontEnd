@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react'
 import SearchBar from './components/SearchBar'
 import Names from './components/Names'
 import NewEntry from './components/NewEntry'
+import Message from './components/Message'
 import serverFunctions from './services/serverFunctions'
 import axios from 'axios'
 
@@ -14,15 +15,15 @@ const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('');
-  const [newFilter, setNewFilter] = useState('');
+  const [newFilter,setNewFilter] = useState('')
+  const [message,setMessage] = useState(null)
   
   const addNewName = (e) => {
     e.preventDefault();
     /** Make sure Data is entered for all fields */
     const newNamelen = newName.length;
     const newNumlen = newNum.length;
-    if(newNamelen === 0 || newNumlen === 0){ return alert('Please enter data for all the fields')} 
-        
+    if(newNamelen === 0 || newNumlen === 0){ return alert('Please enter data for all the fields')}       
     // Look for name in phone book. Will return the object if it exists 
     const person = persons.find(n=>n.name === newName)
     if(!person) {
@@ -41,15 +42,18 @@ const App = () => {
         })
     }
     else{ 
-      window.confirm(`${newName} is already added to the phonebook, would you like to replace the old number with a new one?`);      
-      const changedPerson = {...person, number: newNum}
-      serverFunctions
-      .update(person.id,changedPerson)
-      .then( response=> {
-        setPersons(persons.map(prsn=> prsn.id !== person.id ? prsn : response.data))
-      })
-      setNewName('');
-      setNewNum('');    
+      const truthy = window.confirm(`${newName} is already added to the phonebook, would you like to replace the old number with a new one?`);      
+      if(truthy){
+        const changedPerson = {...person, number: newNum}
+        serverFunctions
+        .update(person.id,changedPerson)
+        .then( response=> {
+          setPersons(persons.map(prsn=> prsn.id !== person.id ? prsn : response.data))
+        })
+        setNewName('');
+        setNewNum('');
+      }
+      else return 
     }
   }
 
@@ -67,13 +71,16 @@ const App = () => {
   }
   // Handle Delete
   const handleDelete = (a,b) => {
-    window.confirm(`Are you sure you want to delete ${b} from your phonebook?`)
-    axios
-    .delete(`http://localhost:3001/persons/${a}`)
-    let copy = [...persons]
-    const removeIndex= persons.findIndex(persons=>persons.id === a)
-    copy.splice(removeIndex)
-    setPersons(copy)
+    const truthy = window.confirm(`Are you sure you want to delete ${b} from your phonebook?`)
+    if(truthy){
+      axios
+      .delete(`http://localhost:3001/persons/${a}`)
+      let copy = [...persons]
+      const removeIndex= persons.findIndex(persons=>persons.id === a)
+      copy.splice(removeIndex)
+      setPersons(copy)
+    }
+    else return 
   }
     // Get initial data from backend. Storing Data in state persons.
     useEffect(() => {
@@ -87,6 +94,7 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
+      <Message />
       <SearchBar handleFilterChange = {handleFilterChange} />
       <h2>Add a New</h2>
       <NewEntry newName = {newName} newNum ={newNum}  handleNameChange ={handleNameChange} handleNumChange = {handleNumChange} addNewName = {addNewName} />

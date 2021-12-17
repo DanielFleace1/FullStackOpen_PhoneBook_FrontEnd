@@ -4,6 +4,7 @@ import SearchBar from './components/SearchBar'
 import Names from './components/Names'
 import NewEntry from './components/NewEntry'
 import Message from './components/Message'
+import ErrorMessage from './components/errorMessage'
 import serverFunctions from './services/serverFunctions'
 import axios from 'axios'
 
@@ -17,43 +18,65 @@ const App = () => {
   const [newNum, setNewNum] = useState('');
   const [newFilter,setNewFilter] = useState('')
   const [message,setMessage] = useState(null)
+  const [errorMessage,setErrorMessage] = useState(null)
   
   const addNewName = (e) => {
     e.preventDefault();
     /** Make sure Data is entered for all fields */
     const newNamelen = newName.length;
     const newNumlen = newNum.length;
-    if(newNamelen === 0 || newNumlen === 0){ return alert('Please enter data for all the fields')}       
+    if(newNamelen === 0 || newNumlen === 0){ return alert('Please enter data for all the fields')}    
+    const newNameObj = {
+      name:newName,
+      number: newNum
+    }   
     // Look for name in phone book. Will return the object if it exists 
     const person = persons.find(n=>n.name === newName)
+    // if numnber does not already exist 
     if(!person) {
       // create new object to be "posted"
-      const newNameObj = {
-        name:newName,
-        number: newNum
-      }
       serverFunctions
       .create(newNameObj)
       .then(response=>{  
-          //console.log('response to post')
-          setPersons(persons.concat(response.data))
-          setNewName('')
-          setNewNum('')
-        })
+        //console.log('response to post')
+        setPersons(persons.concat(response.data))
+        setNewName('')
+        setNewNum('')
+        setMessage(`${newNameObj.name} was added to your phone book`)
+        setTimeout(() => {
+          setMessage(null)
+          }, 3000)
+      })
     }
+    // if number does exist and user wants to change their num.
     else{ 
       const truthy = window.confirm(`${newName} is already added to the phonebook, would you like to replace the old number with a new one?`);      
+      // users confirms to make a change
       if(truthy){
         const changedPerson = {...person, number: newNum}
         serverFunctions
         .update(person.id,changedPerson)
         .then( response=> {
           setPersons(persons.map(prsn=> prsn.id !== person.id ? prsn : response.data))
-        })
-        setNewName('');
-        setNewNum('');
+          setNewName('');
+          setNewNum('');
+          setMessage(`${newNameObj.name}'s number was changed to ${newNameObj.number} in your phone book `)
+          setTimeout(() => {
+            setMessage(null)
+          }, 3000)
+          })
+        .catch(error=> {
+          console.log('There is an error:',error)
+          setErrorMessage(`${newNameObj.name} has already been deleted from the server `)
+          setTimeout(() => {
+            setErrorMessage(null)
+          }, 3000)
+          setNewName('');
+          setNewNum('');
+          setPersons(persons.filter(prsn => prsn.id !== person.id))
+        })  
       }
-      else return 
+      else return
     }
   }
 
@@ -77,7 +100,9 @@ const App = () => {
       .delete(`http://localhost:3001/persons/${a}`)
       let copy = [...persons]
       const removeIndex= persons.findIndex(persons=>persons.id === a)
-      copy.splice(removeIndex)
+      console.log(copy)
+      copy.splice(removeIndex,1)
+      console.log(copy)
       setPersons(copy)
     }
     else return 
@@ -94,9 +119,10 @@ const App = () => {
   return (
     <div>
       <h1>Phonebook</h1>
-      <Message />
+      <Message  message = {message}/>
+      <ErrorMessage  errorMessage = {errorMessage}/>
       <SearchBar handleFilterChange = {handleFilterChange} />
-      <h2>Add a New</h2>
+      <h2>Add a new person</h2>
       <NewEntry newName = {newName} newNum ={newNum}  handleNameChange ={handleNameChange} handleNumChange = {handleNumChange} addNewName = {addNewName} />
       <Names persons = {persons} newFilter ={newFilter} handleDelete = {handleDelete} />
     </div>

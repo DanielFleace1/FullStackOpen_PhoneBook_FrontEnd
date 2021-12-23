@@ -6,18 +6,18 @@
       "id": 1
     },
     {
-      "name": "Bob",
+      "name": "Bob ",
       "number": "222",
       "id": 2
     },
     {
-      "name": "Daniel",
-      "number": "502",
+      "name": "Gina",
+      "number": "812",
       "id": 3
     },
     {
-      "name": "Gina",
-      "number": "812",
+      "name": "Daniel",
+      "number": "502",
       "id": 4
     }
   ]

@@ -8,6 +8,10 @@ import ErrorMessage from './components/errorMessage'
 import serverFunctions from './services/serverFunctions'
 import axios from 'axios'
 
+// base URLs for delete
+// const baseUrl = 'https://radiant-refuge-98080.herokuapp.com/api/persons'
+// relative baseUrl
+const baseUrl = '/api/persons'
 
 
 // App Component 
@@ -97,7 +101,7 @@ const App = () => {
     const truthy = window.confirm(`Are you sure you want to delete ${b} from your phonebook?`)
     if(truthy){
       axios
-      .delete(`http://localhost:3001/persons/${a}`)
+      .delete(`${baseUrl}/${a}`)
       let copy = [...persons]
       const removeIndex= persons.findIndex(persons=>persons.id === a)
       console.log(copy)
